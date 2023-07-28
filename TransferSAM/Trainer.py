@@ -7,7 +7,7 @@ from torch.utils.tensorboard import SummaryWriter
 import matplotlib.pyplot as plt
 from monai.losses import DiceLoss
 from .utils.create_prompt import  identify_box, draw_boxes
-from ..segment_anything.utils.transforms import ResizeLongestSide
+from .utils.transforms import ResizeLongestSide
 import logging
 import pickle
 

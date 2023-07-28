@@ -1,14 +1,3 @@
-from TransferSAM.KiTS_dataset import KiTSdata, ContinueTrainingSampler
-from ..segment_anything import sam_model_registry
-from monai.losses import DiceLoss, GeneralizedDiceFocalLoss, DiceCELoss
-import numpy as np
-import torch
-from torch.utils.data import DataLoader
-import pandas as pd
-import pickle
-import re
-
-
 def prepare_objects(
     model_checkpoint,
     instance_type,
@@ -187,17 +176,27 @@ def main(
 if __name__ == "__main__":
     import os
     import sys
+    import argparse
+    import logging
+    import yaml
     # Get the current script's directory
     current_dir = os.path.dirname(os.path.abspath(__file__))
     # Add the parent directory to the sys.path list to access segment_anything directory
     parent_dir = os.path.dirname(current_dir)
     sys.path.append(parent_dir)
     os.chdir(parent_dir)
+    from segment_anything import sam_model_registry
+    from TransferSAM.KiTS_dataset import KiTSdata, ContinueTrainingSampler
     from TransferSAM.Trainer import Trainer
-    import argparse
-    import logging
-    import yaml
 
+    
+    from monai.losses import DiceLoss, GeneralizedDiceFocalLoss, DiceCELoss
+    import numpy as np
+    import torch
+    from torch.utils.data import DataLoader
+    import pandas as pd
+    import pickle
+    import re
     # Create Parser
     parser = argparse.ArgumentParser(description='Training Loop')
     parser.add_argument("--config_file", type=str, help="filled-out config.yaml or configuration.yaml from experiment", required=True)

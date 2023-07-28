@@ -23,13 +23,11 @@ class KiTSAM():
 if __name__ == "__main__":
     import os
     import sys
-    # Get the current script's directory
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    # Add the parent directory to the sys.path list to access segment_anything directory
     parent_dir = os.path.dirname(current_dir)
-    sys.path.append(parent_dir)
     os.chdir(parent_dir)
-    from segment_anything import sam_model_registry
+    sys.path.append(parent_dir)
+    from segment_anything import sam_model_registry    
     import pickle
     import argparse
 

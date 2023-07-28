@@ -7,7 +7,6 @@ if __name__ == "__main__":
     os.chdir(parent_dir)
     import argparse
     from torchvision import transforms
-    from segment_anything import sam_model_registry
     import nibabel as nib
     from TransferSAM.Predictor import Predictor
     import pickle

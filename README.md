@@ -4,7 +4,11 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 ## Description
-This repository attempts to optimise Segment Anything Model (SAM vit_b) developed by Meta AI for medical image segmentation, namely **[Kidney and Kidney Tumor Segmentation](https://kits-challenge.org/kits23/)** using transfer learning techniques, such as: Feature Extraxction, Fine-Tuning and Domain Adaption.
+This repository attempts to optimise Segment Anything Model (SAM vit_b) developed by Meta AI for medical image segmentation, namely **[Kidney and Kidney Tumor Segmentation](https://kits-challenge.org/kits23/)** using transfer learning techniques, such as: 
+    
+    - Feature Extraxction
+    - Fine-Tuning
+    - Domain Adaption
 
 It was developed as part of the Applied Deep Learning with TensorFlow and PyTorch course conducted at LMU Munich under the guidance and supervision of Mina Rezaei.
 
@@ -35,6 +39,7 @@ cd TransferSAM; pip install -e .
 
 ## Usage
 In the first place download the **[KiTSAM.pkl](https://github.com/Noza23/TransferSAM)**
+Afterwards, follow the code:
 
 ```
 from TransferSAM import Predictor
@@ -75,7 +80,7 @@ In the Project 3 different Mask Decoders were trained:
 2. Tumor model for identifying Kidney Tumors in the image.
 3. Cyst model for identifying Kidney Cysts in the image.
 
-In the end the 3 models were combined into a single class instance which was store in a pickle format using the script:
+In the end the 3 models were combined into a single class instance which was stored in a pickle format using the script:
 ```
 python3 scripts/build_KiTSAM.py --roi_model <Path to ROI model> --tumor_model <Path to tumor model> --cyst_model <Path to cyst model>
 ```
