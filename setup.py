@@ -4,7 +4,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='SAMTransfer',
+    name='TransferSAM',
     url='https://github.com/Noza23/TransferSAM',
     author='Giorgi Nozadze',
     author_email='giorginozadze23@yahoo.com',
