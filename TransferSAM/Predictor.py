@@ -5,7 +5,7 @@ import cv2
 from scipy.ndimage import label
 import TransferSAM.utils.visualize_kits as vis
 from .utils.create_prompt import draw_boxes
-from segment_anything.utils.transforms import ResizeLongestSide
+from ..segment_anything.utils.transforms import ResizeLongestSide
 from matplotlib import pyplot as plt
 
 class Predictor:
