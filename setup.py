@@ -17,7 +17,7 @@ setup(
         'matplotlib',
         'torch',
         'torchvision',
-        'cv2',
+        'opencv-python',
         'nibabel',
         'monai'
     ],
