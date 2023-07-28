@@ -10,6 +10,7 @@ if __name__ == "__main__":
     from segment_anything import sam_model_registry
     import nibabel as nib
     from TransferSAM.Predictor import Predictor
+    import pickle
     
     reshape = transforms.Compose([
         transforms.ToPILImage(),
@@ -32,10 +33,10 @@ if __name__ == "__main__":
     cases = sorted([f for f in os.listdir(case_dir) if not f.startswith('.')])
     relevant_cases = cases[case_start:case_end]
 
-    model_ROI = sam_model_registry["vit_b"]("./models/model_ROI.pth")
-    model_tumor = sam_model_registry["vit_b"]("./models/model_tumor.pth")
-    model_cyst = sam_model_registry["vit_b"]("./models/model_cyst.pth")
-    predictor = Predictor(model_ROI, model_tumor, model_cyst, threshold=0, seed=42, device=args.device)
+    with open('./models/KiTSAM.pkl', 'rb') as file:
+        kitsam = pickle.load(file)
+
+    predictor = Predictor(kitsam.model_roi, kitsam.tumor_decoder, kitsam.cyst_decoder, threshold=0, seed=42, device=args.device)
 
     for cs in relevant_cases:
         case_path = os.path.join(case_dir, cs)

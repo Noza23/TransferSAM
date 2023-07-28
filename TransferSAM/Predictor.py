@@ -14,8 +14,8 @@ class Predictor:
 
     Attributes:
         model_ROI (torch.nn.Module): Fine-Tuned model for ROI predictions.
-        model_tumor (torch.nn.Module): Fine-Tuned model for tumor predictions.
-        model_cyst (torch.nn.Module): Fine-Tuned model for cyst predictions.
+        decoder_tumor (torch.nn.Module): Fine-Tuned decoder for tumor predictions.
+        decoder_cyst (torch.nn.Module): Fine-Tuned decoder for cyst predictions.
         threshold (float): Threshold in the prediction of ROI. Defaults to 0.
         seed (int): Seed for reproducible predictions. Defaults to 42.
         device (str): String name of the desired Device. Defaults to cpu.
@@ -33,20 +33,20 @@ class Predictor:
     def __init__(
             self,
             model_ROI,
-            model_tumor=None,
-            model_cyst=None,
+            decoder_tumor=None,
+            decoder_cyst=None,
             threshold: float=0,
             seed: int=42,
-            device: str="cpu"
+            device=None
         ):
-        self.device = torch.device(device)
-        self.model_ROI = model_ROI.to(device)
-
-        if (model_tumor is None) or (model_cyst is None):
-            raise ValueError("Please provide both binary models for tumor and cyst.")
+        if device is None:
+            self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         else:
-            self.model_tumor = model_tumor.to(device)
-            self.model_cyst = model_cyst.to(device)
+            self.device = torch.device(device)
+
+        self.model_ROI = model_ROI.to(self.device)
+        self.decoder_tumor = decoder_tumor.to(self.device)
+        self.decoder_cyst = decoder_cyst.to(self.device)
         self.transform = transforms.Compose([
         transforms.ToPILImage(),
         transforms.Resize((512, 512)),
@@ -179,7 +179,7 @@ class Predictor:
             print("There is 1 Kidney in the slice")
 
         # Tumor prediction
-        masks_tumor, _ = self.model_tumor.mask_decoder(
+        masks_tumor, _ = self.decoder_tumor(
             image_embeddings=embed, # Ix256x64x64
             image_pe=image_pe, # 1x256x64x64
             sparse_prompt_embeddings=sparse_embeddings, # Ix2x256
@@ -187,7 +187,7 @@ class Predictor:
             multimask_output=False
         )
         # Cyst prediction
-        masks_cyst, _ = self.model_cyst.mask_decoder(
+        masks_cyst, _ = self.decoder_cyst(
             image_embeddings=embed, # Ix256x64x64
             image_pe=image_pe, # 1x256x64x64
             sparse_prompt_embeddings=sparse_embeddings, # Ix2x256

@@ -53,6 +53,7 @@ def build_sam_custom(checkpoint=None, n_classes=4):
         checkpoint=checkpoint,
         num_multimask_outputs=n_classes
     )
+
 # Modified by: https://github.com/Noza23/TransferSAM
 sam_model_registry = {
     "default": build_sam_vit_h,
