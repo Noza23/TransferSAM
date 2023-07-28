@@ -16,7 +16,7 @@ setup(
         'pandas',
         'matplotlib',
         'torch',
-        'torchvision'
+        'torchvision',
         'cv2',
         'nibabel',
         'monai'
