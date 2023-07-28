@@ -18,7 +18,7 @@ The `segment_anything` directory included in this project has been derived from 
 
 
 ## Installation
-The requirements are listed in the **[setup.py](https://github.com/Noza23/TransferSAM)**. 
+The requirements are listed in the **[setup.py](https://github.com/Noza23/TransferSAM)**
 
 You can install TransferSAM using `pip`:
 
@@ -34,3 +34,4 @@ cd TransferSAM; pip install -e .
 ```
 
 ## Usage
+In the first place download desired checkpoint from **[Model Checkpoints](https://github.com/facebookresearch/segment-anything#model-checkpoints)** (In the examples above, we have used **vit_b** - smallest SAM checkpoint)

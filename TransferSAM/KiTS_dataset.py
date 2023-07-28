@@ -8,20 +8,40 @@ from torch.utils.data import Dataset, Sampler
 import pandas as pd
 from torchvision import transforms
 
-# Creating custom Dataset: Simple (map-style dataset), 
 class KiTSdata(Dataset):
+    """
+    Map-style custom Dataset subclass of torch.utils.data.Dataset
+
+    Attributes:
+        instance_type (str): One of ["kidney", "cyst", "tumor", "ROI"].
+        case_sample (int): How many cases to sample randomly in each __getitem__ step.
+        batch_size (int): Size of a single batch.
+        device (torch.device): Device.
+        path (str): Path to the dataset files.
+        train (bool): Flag indicating to either training or validation set. Defaults to True.
+        valid_prop (float): Proportion of the the validation set from the avaliable data. Defaults to 0.1.
+        logger (logging.Logger): Setup logger.
+
+    Methods:
+        __init__: Initializes a new KiTSdata instance.
+        _identify_cases: Identifyes cases where the given instance_type is present.
+        _create_datapoint_df: Creates annotation DataFrame of relvant cases and slices.
+        generate_training_plan: Creates a Training Plan, randomly shuffles slices from different cases and splits into mini-batches.
+        _regenerate_training_plan: Regenerates Training Plan, used after each epoch to re-shuffle data.
+        __getitem__: Returns Embeddings torch.Size([1, B, 256, 64, 64]) and ground truth masks torch.Size([1, B, 512, 512]).
+    """
     def __init__(
         self,
         instance_type: str,
-        case_sample: int, # How many cases to sample randomly in each __getitem__ step.
-        batch_size: int, # How many slices should be sampled randomly from the sampled cases in each __getitem__ step.
+        case_sample: int,
+        batch_size: int,
         device: torch.device,
         path: str,
         train: bool=True,
         valid_prop: float=0.1,
         logger=None
     ):
-        valid_instances = {"kidney", "cyst", "tumor", "full", "ROI", "Stage2"}
+        valid_instances = {"kidney", "cyst", "tumor", "ROI"}
         if instance_type not in valid_instances:
             raise ValueError(f"instance_type must be one of: {valid_instances}")
         if batch_size < 2:
@@ -36,8 +56,8 @@ class KiTSdata(Dataset):
             self.logger = logger
         self.log_path = os.path.dirname(self.logger.handlers[1].baseFilename)
 
-        # Keep only cases where instance_type is present and embedding is avaliable if full segmentation take all instances
-        if instance_type in ["full", "ROI", "Stage2"]:
+        if instance_type == "ROI":
+            # If ROI, all cases are relevant.
             self.cases = sorted([f for f in os.listdir(self.path) if not f.startswith('.')])
         else:
             self.cases = self._identify_cases()
@@ -55,15 +75,18 @@ class KiTSdata(Dataset):
         self.datapoints = self._create_datapoint_df()
         self.case_sample = case_sample
         self.batch_size = batch_size
-        # Generate training plan in batches
+
+        # Generate training plan and save it on disk.
         self.training_plan = self._generate_training_plan(data=self.datapoints.copy())
         if train:
             self.training_plan.to_csv(os.path.join(self.log_path, "training_plan.csv"), index=False)
             self.logger.info(f"Training plan has been generated and saved in {self.log_path} directory.")
         else:
-            self.training_plan.to_csv(os.path.join(self.log_path, "validation_set.csv"), index=False)
-            self.logger.info(f"Validation set has been generated and saved in {self.log_path} directory.")
-
+            if os.path.exists(os.path.join(self.log_path, "validation_set.csv")):
+                self.logger.info(f"Validation Set already exists.")
+            else:
+                self.training_plan.to_csv(os.path.join(self.log_path, "validation_set.csv"), index=False)
+                self.logger.info(f"Validation set has been generated and saved in {self.log_path} directory.")
         self.device = device
         self.transform = transforms.Compose([
             transforms.ToPILImage(),
@@ -72,7 +95,7 @@ class KiTSdata(Dataset):
         ])
 
     def _identify_cases(self):
-        self.logger.info("Identifying cases...")
+        self.logger.info("Identifying cases.")
         # Returns cases where the "self.instance_type" instance is present and embedding is avaliable
         cases = sorted([f for f in os.listdir(self.path) if not f.startswith('.')])
         cases_relevant = []
@@ -91,11 +114,9 @@ class KiTSdata(Dataset):
         self.logger.info(f"There are {len(cases_relevant)} relevant cases for {self.instance_type} instance.")
         return cases_relevant
     
-
     def _create_datapoint_df(self):
-        self.logger.info("Generating annotation file...")
+        self.logger.info("Generating annotation file.")
         # Creates Annotation file
-
         slices_total = []
         embedding_ids = []
         cases_total = []
@@ -110,7 +131,6 @@ class KiTSdata(Dataset):
             embedding_ids.extend(embedding_id)
             cases_total.extend(cases)
             is_blank_total.extend(is_blank)
-
         return pd.DataFrame(
             {
                 "case": cases_total,
@@ -122,9 +142,9 @@ class KiTSdata(Dataset):
 
     def _generate_training_plan(self, data):
         if self.train:
-            self.logger.info("### Generating training plan... ###")
+            self.logger.info("Generating training plan.")
         else:
-            self.logger.info("### Generating validation set... ###")
+            self.logger.info("Generating validation set.")
 
         # Generates training_plan based on case_sample and batch_size.
         training_plan = pd.DataFrame(
@@ -163,8 +183,7 @@ class KiTSdata(Dataset):
         # Filter avaliable data
         cases_avaliable = pd.Series(data["case"].unique())
         df = data[(data["case"].isin(cases_sampled)) & (data["is_blank"] == blank)]
-
-        # If df has not enough datapoints to fill the batch take all 
+        # If df has not enough datapoints to fill the batch take all
         if df.shape[0] < batch_size:
             result = df.copy()
         else:
@@ -196,25 +215,25 @@ class KiTSdata(Dataset):
     def _calculate_probabs(self, df:pd.DataFrame):
         probs = df['case'].map((1 - df["case"].value_counts() / df.shape[0]) / df["case"].value_counts())
         return probs
-
     def _regenerate_training_plan(self):
         self.training_plan = self._generate_training_plan(self.datapoints.copy())
-
-    # lenght protocol
+    
     def __len__(self):
         # Max number of batch in training_plan
         batch_n = self.training_plan["batch"].max()
         return batch_n
     
-    # getitem protocol
     def __getitem__(self, idx):
+        """
+        Returns:
+            torch.tensors: Embeddings torch.Size([1, B, 256, 64, 64]) and Ground Truth masks torch.Size([1, B, 512, 512])
+        """
         batch_id = idx + 1
-        if self.instance_type == "Stage2":
+        if self.instance_type != "ROI":
             batch_data = self.training_plan[(self.training_plan["batch"] == batch_id) & (self.training_plan["is_blank"] == 0)].sort_values("slice")
         else:
             batch_data = self.training_plan[self.training_plan["batch"] == batch_id].sort_values("slice")
         cases = batch_data["case"].unique()
-        # According to training plan read slices and and gt_masks
         embeddings = []
         gt_masks = []
         for case in cases:
@@ -238,46 +257,10 @@ class KiTSdata(Dataset):
         return embeddings_torch, gt_masks_torch 
 
     def _read_instances(self, case, slice_ids):
-        # If full segmentation
-        if self.instance_type in ["full", "ROI", "Stage2"]:
-            seg_path = os.path.join(self.path, case, "segmentation.nii.gz")
-            segment_final = self._read_single_instance(seg_path, slice_ids)
-            # Return numpy array shape: Sx1xHxW
-            return segment_final[:, None, :, :]
-
-        # Read instances Helper-Function
-        instances_path = os.path.join(self.path, case, "instances")
-        # Sorted list of all avaliable instances
-        instances = sorted(os.listdir(instances_path))
-        # Get path of selected type of instances
-        instance_files = [inst for inst in instances if inst.startswith(self.instance_type)]
-        n_instances = sum([1 if inst.endswith("annotation-1.nii.gz") else 0 for inst in instance_files])
-
-        # Case: if no instance avaliable
-        if n_instances == 0:
-            self.logger.info(f"No {self.instance_type} instance present for {case}.")
-            return np.array([0])
-        
-        # We will always take the first annotation
-        # Case: only one instance avaliable:
-        if n_instances == 1:
-            # Read the first annotation
-            seg_path = os.path.join(instances_path, instance_files[0])
-            segment_final = self._read_single_instance(seg_path, slice_ids)
-            # Return numpy array shape: Sx1xHxW
-            return segment_final[:, None, :, :]
-    
-        # Case: more than one instance avaliable:
-        elif n_instances > 1:
-            # Use only first annotations
-            files = [inst for inst in instance_files if inst.endswith("annotation-1.nii.gz")]
-            # Read segments
-            segments = []
-            for file in files:
-                seg_path = os.path.join(instances_path, file)
-                segment = self._read_single_instance(seg_path, slice_ids)
-                segments.append(segment)
-            return np.sum(segments, axis=0, dtype=np.uint8)[:, None, :, :]
+        seg_path = os.path.join(self.path, case, "segmentation.nii.gz")
+        segment_final = self._read_single_instance(seg_path, slice_ids)
+        # Return numpy array shape: Sx1xHxW
+        return segment_final[:, None, :, :]
         
     def _read_single_instance(self, seg_path, slice_ids):
         # Reads selected slices from a single segmentation file and scales array in range [0, 255].
@@ -289,13 +272,14 @@ class KiTSdata(Dataset):
         # If resolution not 512x512 then resize
         if segment.shape[1:] != (512, 512):
             segment = (np.vstack([self.transform(se) for se in segment]) * 255).astype("uint8")
-        if self.instance_type not in ["full", "Stage2"]:
-            # if not multiclass segmentation turn to binary
+        if self.instance_type == "ROI":
             segment = np.clip(segment, None, 1)
         return segment
 
-# Continue Training sampler
 class ContinueTrainingSampler(Sampler):
+    """
+    Custom Sampler to continue training.
+    """
     def __init__(self, data_source, start_index, end_index):
         self.data_source = data_source
         self.start_index = start_index

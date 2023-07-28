@@ -1,31 +1,29 @@
 data_config:
-  instance_type: Stage2        # One of ['kidney', 'cyst', 'tumor', 'full', 'ROI', 'Stage2']
-  valid_prop: 0.1               # Portion of validation sample [0-1) [Default: 0.1]
-  data_path: ./kits23/dataset   # Training data location
+  instance_type: ROI            # One of ['kidney', 'cyst', 'tumor', 'ROI']
+  valid_prop: 0.05               # Portion of validation sample [0-1)
+  data_path: ./kits23/dataset    # Training data location
 
 training_config:
-  model: ./models/sam_vit_b_01ec64.pth   # Model checkpoint
-  retrain_decoder: True                 # Should the decoder be retrained from scratch or Fine-Tuned has to be True if "full"
-  seed: 120                                # Random seed for reproducibility
-  n_epoch: 3                              # How many epochs to train [Default: 2]
-  batch_size: 128                         # Number of slices in each batch [Default: 64]
-  batch_acc: 1                            # Number of batches to accumulate in single optimization step [Default: 2]
-  case_sample: 4                          # How many cases to sample in each batch [Default: 4]
-  validate_every: 1000                    # After how many batches[accumulated] to validate [Default: 300]
-  save_every: 100                        # After how many batches to save a checkpoint [Default: 300]
-  save_path: ./training/Stage2/exp0_hope     # Path to save the checkpoints and log files
+  model: ./models/sam_vit_b_01ec64.pth    # Model checkpoint.
+  retrain_decoder: True                  # Retrain Decoder or Fine-Tune it.
+  seed: 23                                # Random seed for reproducibility.
+  n_epoch: 15                              # How many epochs to train.
+  batch_size: 160                          # Number of slices in each batch.
+  batch_acc: 1                            # Number of batches to accumulate in single optimization step.
+  case_sample: 16                          # How many different cases to sample in creating each batch.
+  validate_every: 1000                    # After how many batches to validate.
+  save_every: 1000                          # After how many batches to save a checkpoint.
+  save_path: ./training/ROI/exp1          # Output path for checkpoints and log files.
 
 optimizer_config:
-  optimizer: AdamW        # Don't change it, other optimizers are not supported
-  loss: DiceCELoss      # Which loss Function to optimizer for supported Losses: [CrossEntropy; Dice; GeneralizedDiceFocalLoss; DiceCELoss; FocalLoss]
-  betas: [0.9, 0.999]     # beta coefficients
-  weight_decay: 0.1       # weight decay
-  initial_lr: 0.000009     # constant LR used in case lr_shedule is False [from SAM paper] 
+  optimizer: AdamW        # Don't change it, other optimizers are not supported.
+  loss: DiceCELoss        # Supported Losses: [CrossEntropy; Dice; GeneralizedDiceFocalLoss; DiceCELoss; FocalLoss].
+  betas: [0.9, 0.999]     # Beta coefficients for optimizer.
+  weight_decay: 0.1       # Weight decay.
+  initial_lr: 0.00005     # Initial LR used in case lr_shedule is False.
 
 lr_schedule:
-  True:                         # if set to False, constant initial_lr will be used
-    warmup_lr: 0.0005           # set to None to turn it off
-    warmup_steps: 50            # Number of warm-up steps if warmup_lr is not None    
-    constant_lr: 100            # Keep initial LR constant for number of batches
-    gamma: 0.9                  # multiplier after constants steps {[0, 1], None}
-    min_lr: 0.00000001          # minimum LR in cosine_annealing like sheduling [see Trainer._generate_lr_shedule method]
+  True:                          # If set to False, constant initial_lr will be used.
+    warmup_lr: 0.00005           # LR after warm-up.
+    warmup_steps: 200            # Number of warm-up steps at the beginning.
+    min_lr: 0.00000001           # Lower-bound for the LR.

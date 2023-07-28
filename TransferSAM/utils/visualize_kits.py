@@ -36,14 +36,17 @@ def show_anns(anns):
 
 # Transform bbox returned by the SAM auto segmentation
 def transform_bbox(bbox):
-    # bbox returned by auto segmentation has shape XYWH
+    """
+        Helper Function to reshape bbox returned by the SAM auto segmentation model.
+    """
     x0, y0 = bbox[0], bbox[1]
     x1, y1 = x0 + bbox[2], y0 + bbox[3]
     return np.array([x0, y0, x1, y1])
 
 def visualize3d_scan(image, segmentation, step_size=20):
-    # Takes 3d image RGB numpy array of shape SxCxHxW
-    # And segmentation: numpy array of shape SxHxW
+    """
+        Visualize complete case and associated segmentation mask slices by step_size.
+    """
     image = image.transpose((0, 2, 3, 1))
     indices = np.arange(image.shape[0], step=step_size)
     for index, img, s in zip(indices, image[indices, :, :], segmentation[indices, :, :]):
@@ -64,13 +67,10 @@ def visualize3d_scan(image, segmentation, step_size=20):
         plt.show()
 
 def visualize_segment(image, segment, box=[0, 0, 0, 0], slice:int=20):
-    # Visualize single slice
-    # Takes 3d image RGB numpy array of shape SxCxHxW
-    # And segmentation: numpy array of shape SxHxW
-    # Box to draw
-    # Slice number
+    """
+        Visualize single slice with associated segmentation and optionaly with a box.
+    """
     image = image.transpose((0, 2, 3, 1))
-    #segment = segment.unsqueeze(3)
     plt.figure(figsize = (10,10))
     plt.imshow(image[slice, :, :])
     plt.axis("off")

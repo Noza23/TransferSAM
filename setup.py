@@ -25,6 +25,4 @@ setup(
     license='MIT',
     description='Fine-Tune, retrain SAM Mask-Decoder',
     python_requires='>=3.9'
-    # We will also need a readme eventually (there will be a warning)
-    # long_description=open('README.txt').read(),
 )
