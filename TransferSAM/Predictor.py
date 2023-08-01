@@ -13,7 +13,8 @@ class Predictor:
     Predictor class, that generates predictions for .nii images.
 
     Attributes:
-        model_ROI (torch.nn.Module): Fine-Tuned model for ROI predictions.
+        sam_base (torch.nn.Module): SAM Base model for generating Embeddings.
+        decoder_ROI (torch.nn.Module): Fine-Tuned decoder for ROI predictions.
         decoder_tumor (torch.nn.Module): Fine-Tuned decoder for tumor predictions.
         decoder_cyst (torch.nn.Module): Fine-Tuned decoder for cyst predictions.
         threshold (float): Threshold in the prediction of ROI. Defaults to 0.
@@ -32,7 +33,8 @@ class Predictor:
     """
     def __init__(
             self,
-            model_ROI,
+            sam_base,
+            decoder_ROI,
             decoder_tumor=None,
             decoder_cyst=None,
             threshold: float=0,
@@ -44,7 +46,8 @@ class Predictor:
         else:
             self.device = torch.device(device)
 
-        self.model_ROI = model_ROI.to(self.device)
+        self.sam_base = sam_base.to(self.device)
+        self.decoder_ROI = decoder_ROI.to(self.device)
         self.decoder_tumor = decoder_tumor.to(self.device)
         self.decoder_cyst = decoder_cyst.to(self.device)
         self.transform = transforms.Compose([
@@ -52,7 +55,7 @@ class Predictor:
         transforms.Resize((512, 512)),
         transforms.ToTensor()
     ])
-        self.sam_transform = ResizeLongestSide(model_ROI.image_encoder.img_size)
+        self.sam_transform = ResizeLongestSide(sam_base.image_encoder.img_size)
         # Fix-Box for ROI prediction
         self.box_roi = np.array([0, 100, 512, 450])
         # threshold for sigmoid scores
@@ -83,10 +86,10 @@ class Predictor:
         # Permute to shape BxCxHxW
         slc_torch = slc_torch.permute(2, 0, 1).contiguous()[None, :, :, :]
         # Preprocess: Normalize pixel values and pad to a square input
-        slc_torch = self.model_ROI.preprocess(slc_torch)
+        slc_torch = self.sam_base.preprocess(slc_torch)
         # Embedd
         with torch.no_grad():
-            slc_embedded = self.model_ROI.image_encoder(slc_torch)
+            slc_embedded = self.sam_base.image_encoder(slc_torch)
             embedding = slc_embedded
         return embedding
     
@@ -101,25 +104,25 @@ class Predictor:
             (numpy.ndarray, torch.Tensor): Bool-mask: 512x512 and Tensor of sigmoid scores: 1x1x512x512.
         """
         np.random.seed(self.seed)
-        image_pe = self.model_ROI.prompt_encoder.get_dense_pe()
+        image_pe = self.sam_base.prompt_encoder.get_dense_pe()
         box_reshaped = self.sam_transform.apply_boxes(
             self.box_roi,
             original_size=(512, 512)
         )
         # Prompt Embeddings
-        sparse_embeddings, dense_embeddings = self.model_ROI.prompt_encoder(
+        sparse_embeddings, dense_embeddings = self.sam_base.prompt_encoder(
             points=None,
             boxes=torch.as_tensor(box_reshaped, device=self.device), # Bx4
             masks=None
         )
-        masks, _ = self.model_ROI.mask_decoder(
+        masks, _ = self.decoder_ROI(
             image_embeddings=embd, # 1x256x64x64
             image_pe=image_pe, # 1x256x64x64
             sparse_prompt_embeddings=sparse_embeddings, # 1x2x256
             dense_prompt_embeddings=dense_embeddings, # 1x256x64x64
             multimask_output=False
         )
-        mask_pred = self.model_ROI.postprocess_masks(
+        mask_pred = self.sam_base.postprocess_masks(
             masks,
             input_size=(1024, 1024),
             original_size=(512, 512)
@@ -159,7 +162,7 @@ class Predictor:
             (numpy.ndarray, torch.Tensor): Box prompts: (NumberOfInstance)x4, Final segmentation mask: 512x512.
         """
         np.random.seed(self.seed)
-        image_pe = self.model_ROI.prompt_encoder.get_dense_pe()
+        image_pe = self.sam_base.prompt_encoder.get_dense_pe()
         sep_point, boxes = draw_boxes(ROI)
         ROI = torch.tensor(ROI)
         boxes_reshaped = self.sam_transform.apply_boxes(
@@ -167,7 +170,7 @@ class Predictor:
             original_size=(512, 512)
         )
         # Prompt Embeddings
-        sparse_embeddings, dense_embeddings = self.model_ROI.prompt_encoder(
+        sparse_embeddings, dense_embeddings = self.sam_base.prompt_encoder(
             points=None,
             boxes=torch.as_tensor(boxes_reshaped, device=self.device), # Bx4
             masks=None
@@ -194,12 +197,12 @@ class Predictor:
             dense_prompt_embeddings=dense_embeddings, # Ix256x64x64
             multimask_output=False
         )
-        masks_tumor_pred = self.model_ROI.postprocess_masks(
+        masks_tumor_pred = self.sam_base.postprocess_masks(
             masks_tumor,
             input_size=(1024, 1024),
             original_size=(512, 512)
         )
-        masks_cyst_pred = self.model_ROI.postprocess_masks(
+        masks_cyst_pred = self.sam_base.postprocess_masks(
             masks_cyst,
             input_size=(1024, 1024),
             original_size=(512, 512)

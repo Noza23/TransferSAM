@@ -1,0 +1,30 @@
+data_config:
+  data_path: /DATA/kits23/dataset
+  instance_type: tumor
+  valid_prop: 0.05
+lr_schedule:
+  true:
+    constant_lr: None
+    gamma: None
+    min_lr: 1.0e-08
+    warmup_lr: 5.0e-05
+    warmup_steps: 200
+optimizer_config:
+  betas:
+  - 0.9
+  - 0.999
+  initial_lr: 5.0e-05
+  loss: DiceCELoss
+  optimizer: AdamW
+  weight_decay: 0.1
+training_config:
+  batch_acc: 1
+  batch_size: 128
+  case_sample: 8
+  model: ./models/sam_vit_b_01ec64.pth
+  n_epoch: 8
+  retrain_decoder: true
+  save_every: 1000
+  save_path: ./training/tumor/exp1
+  seed: 23
+  validate_every: 25

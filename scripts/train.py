@@ -158,12 +158,6 @@ def main(
     if ct:
         # Continue Training
         epoch, batch = re.search(r"checkpoint_(\d+)_(\d+)\.pth", training_config["model"]).groups()
-        trainer.tensorboard_steps = {
-            "Avg batch Loss/train": int(epoch) * 1000 + int(batch),
-            "Avg batch Loss/valid": 1 + int(epoch),
-            "Avg Epoch Loss/valid": 1 + int(epoch),
-            "Extra Loss": int(epoch) * 1000 + int(batch) * trainer.batch_acc
-        }
         PATH_OPT = os.path.join(training_config["save_path"], "checkpoints", "optimizer_" + str(epoch) + "_" + str(batch) + ".pkl")
         with open(PATH_OPT, "rb") as f:
             optimizer = pickle.load(f)

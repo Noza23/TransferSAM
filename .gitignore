@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+# Pickels
+*.pkl
+# checkpoints
+*.pth
+
 # Distribution / packaging
 .Python
 build/

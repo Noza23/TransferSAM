@@ -38,19 +38,18 @@ cd TransferSAM; pip install -e .
 ```
 
 ## Usage
-In the first place download the **[KiTSAM.pkl](https://github.com/Noza23/TransferSAM)**
+In the first place download the **[KiTSAM.pkl](https://drive.google.com/file/d/1HfBGzMmcid6mTnzXk01qmWgS0lud2JVH/view?usp=drive_link)**
 Afterwards, follow the code:
 
 ```
-from TransferSAM import Predictor
-with open('<path/to/KiTSAM.pkl>', 'rb') as file:
-    kitsam = pickle.load(file)
-predictor = Predictor(kitsam.model_roi, kitsam.tumor_decoder, kitsam.cyst_decoder)
+from TransferSAM import Predictor, load_KiTSAM, KiTSAM
+kitsam = load_KiTSAM('<path/to/KiTSAM.pkl>')
+predictor = Predictor(kitsam.sam_base, kitsam.model_roi, kitsam.tumor_decoder, kitsam.cyst_decoder)
 prediction_mask = predictor.predict_complete(<your image_slice of shape HxW>)
 ```
+Or alternatively follow the **[example notebook](https://github.com/Noza23/TransferSAM/blob/main/notebooks/predictor_example.ipynb)**
 
-or generate predictions for an entire 3D case of shape SxHxW
-
+It is also possible to generate predictions for an entire 3D case of shape SxHxW:
 ```
 prediction_masks = predictor.predict_case(<your 3D image of shape SxHxW>)
 ```
@@ -73,14 +72,27 @@ In order to start training, fill out the **config.yaml** and execute the followi
 ```
 python3 scripts/train.py --config_file config.yaml --device "cuda:0"
 ```
+### Training Results
+Model checkpoint provided above was trained with the configuration files stored in **[configurations](https://github.com/Noza23/TransferSAM/tree/main/models/configurations)**
+
+All three Mask Decoders were trained on the **[weighted sum of Dice and Cross Entropy](https://docs.monai.io/en/stable/losses.html#diceceloss)** losses using the **[AdamW](https://pytorch.org/docs/stable/generated/torch.optim.AdamW.html)** optimizer:
+
+- **`ROI model`**
+![ROI model](assets/ROI_summary.jpeg)
+
+- **`tumor model`**
+![tumor model](assets/tumor_summary.jpeg)
+
+- **`cyst model`**
+![cyst model](assets/cyst_summary.jpeg)
 
 ### Combining models
-In the Project 3 different Mask Decoders were trained:
+Resulting 3 Mask Decoders:
 1. Region of Interst (ROI) model for identifying regions of interest (Kidneys) in the image.
 2. Tumor model for identifying Kidney Tumors in the image.
 3. Cyst model for identifying Kidney Cysts in the image.
 
-In the end the 3 models were combined into a single class instance which was stored in a pickle format using the script:
+In the end the 3 mask decoders were combined into a single class instance which was stored in a pickle format using the script:
 ```
 python3 scripts/build_KiTSAM.py --roi_model <Path to ROI model> --tumor_model <Path to tumor model> --cyst_model <Path to cyst model>
 ```

@@ -12,11 +12,13 @@ class KiTSAM():
     """
     def __init__(
         self,
+        sam_base: str,
         roi: str,
         tumor: str,
         cyst: str
     ):
-        self.model_roi = sam_model_registry["vit_b"](roi)
+        self.sam_base = sam_model_registry["vit_b"](sam_base)
+        self.model_roi = sam_model_registry["vit_b"](roi).mask_decoder
         self.tumor_decoder = sam_model_registry["vit_b"](tumor).mask_decoder
         self.cyst_decoder = sam_model_registry["vit_b"](cyst).mask_decoder
 
@@ -28,11 +30,12 @@ if __name__ == "__main__":
     os.chdir(parent_dir)
     sys.path.append(parent_dir)
     from segment_anything import sam_model_registry    
-    import pickle
     import argparse
+    from TransferSAM import save_KiTSAM
 
     # Create Parser
     parser = argparse.ArgumentParser(description='Combine Models')
+    parser.add_argument("--sam_base", type=str, help="Path to SAM_base checkpoint for image encoder", required=True)
     parser.add_argument("--roi_model", type=str, help="Path to ROI model checkpoint", required=True)
     parser.add_argument("--tumor_model", type=str, help="Path to tumor model checkpoint", required=True)
     parser.add_argument("--cyst_model", type=str, help="Path to cyst model checkpoint", required=True)
@@ -40,11 +43,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     kitsam = KiTSAM(
+        sam_base=args.sam_base,
         roi=args.roi_model,
         tumor=args.tumor_model,
         cyst=args.cyst_model
     )
-    
-    with open('./models/KiTSAM.pkl', 'wb') as file:
-        pickle.dump(kitsam, file)
-    print(f"KiTSAM.pkl has benn saved in {parent_dir}/models directory")
+    save_KiTSAM(kitsam, './models/KiTSAM.pkl')
