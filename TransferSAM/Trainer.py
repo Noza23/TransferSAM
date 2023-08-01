@@ -513,7 +513,7 @@ class Trainer:
             self.writer.add_scalar(f"Avg Epoch {self.loss._get_name()} Loss/valid", total_loss, self.tensorboard_steps["Avg Epoch Loss/valid"])
             self.tensorboard_steps["Avg Epoch Loss/valid"] += 1
 
-            # After each Eppoch regenerate training_set: reshuffle data.
+            # After each Epoch regenerate training_set: reshuffle data.
             self.logger.info(f"Starting regenerating training plan for the next epoch.")
             # Setting seed for reproducibility.
             np.random.seed(seed + epoch + 10)
