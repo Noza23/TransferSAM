@@ -9,7 +9,7 @@ if __name__ == "__main__":
     from torchvision import transforms
     import nibabel as nib
     from TransferSAM.Predictor import Predictor
-    import pickle
+    from TransferSAM import load_KiTSAM, KiTSAM
     
     reshape = transforms.Compose([
         transforms.ToPILImage(),
@@ -32,10 +32,17 @@ if __name__ == "__main__":
     cases = sorted([f for f in os.listdir(case_dir) if not f.startswith('.')])
     relevant_cases = cases[case_start:case_end]
 
-    with open('./models/KiTSAM.pkl', 'rb') as file:
-        kitsam = pickle.load(file)
+    kitsam = load_KiTSAM('./models/KiTSAM.pkl')
 
-    predictor = Predictor(kitsam.model_roi, kitsam.tumor_decoder, kitsam.cyst_decoder, threshold=0, seed=42, device=args.device)
+    predictor = Predictor(
+        kitsam.sam_base,
+        kitsam.model_roi,
+        kitsam.tumor_decoder,
+        kitsam.cyst_decoder,
+        threshold=0,
+        seed=42,
+        device=args.device
+    )
 
     for cs in relevant_cases:
         case_path = os.path.join(case_dir, cs)

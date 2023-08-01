@@ -94,7 +94,7 @@ Resulting 3 Mask Decoders:
 
 In the end the 3 mask decoders were combined into a single class instance which was stored in a pickle format using the script:
 ```
-python3 scripts/build_KiTSAM.py --roi_model <Path to ROI model> --tumor_model <Path to tumor model> --cyst_model <Path to cyst model>
+python3 scripts/build_KiTSAM.py --sam_base <Path to SAM Base checkpoint> --roi_model <Path to ROI model> --tumor_model <Path to tumor model> --cyst_model <Path to cyst model>
 ```
 
 ### Prediction
