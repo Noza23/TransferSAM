@@ -38,7 +38,7 @@ cd TransferSAM; pip install -e .
 ```
 
 ## Usage
-In the first place download the **[KiTSAM.pkl](https://drive.google.com/file/d/1HfBGzMmcid6mTnzXk01qmWgS0lud2JVH/view?usp=drive_link)**\
+In the first place download the **[KiTSAM.pkl](https://drive.google.com/file/d/1HfBGzMmcid6mTnzXk01qmWgS0lud2JVH/view?usp=sharing)**\
 Afterwards, follow the code:
 
 ```
