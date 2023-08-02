@@ -38,7 +38,7 @@ cd TransferSAM; pip install -e .
 ```
 
 ## Usage
-In the first place download the **[KiTSAM.pkl](https://drive.google.com/file/d/1HfBGzMmcid6mTnzXk01qmWgS0lud2JVH/view?usp=drive_link)**
+In the first place download the **[KiTSAM.pkl](https://drive.google.com/file/d/1HfBGzMmcid6mTnzXk01qmWgS0lud2JVH/view?usp=drive_link)**\
 Afterwards, follow the code:
 
 ```
@@ -68,7 +68,7 @@ python3 scripts/embed.py -i <Path to the dataset directory>  --checkpoint <SAM c
 Generated Embeddings for each case will be saved in each case directory of the dataset.
 
 ### Start Training
-In order to start training, fill out the **config.yaml** and execute the following script:
+In order to start training, fill out the **[config.yaml](https://github.com/Noza23/TransferSAM/blob/main/config.yaml)** and execute the following script:
 ```
 python3 scripts/train.py --config_file config.yaml --device "cuda:0"
 ```

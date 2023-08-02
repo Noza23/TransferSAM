@@ -7,7 +7,7 @@ training_config:
   model: ./models/sam_vit_b_01ec64.pth    # Model checkpoint.
   retrain_decoder: True                   # Retrain Decoder or Fine-Tune it.
   seed: 23                                # Random seed for reproducibility.
-  n_epoch: 8                             # How many epochs to train.
+  n_epoch: 8                              # How many epochs to train.
   batch_size: 160                         # Number of slices in each batch.
   batch_acc: 1                            # Number of batches to accumulate in single optimization step.
   case_sample: 16                         # How many different cases to sample in creating each batch.
